@@ -29,9 +29,17 @@ jobs:
         run: |
           .\vcpkg\bootstrap-vcpkg.bat
 
-      - name: Install RustDesk dependencies via vcpkg (manifest mode)
+      - name: Install RustDesk dependencies via vcpkg (manifest mode, static triplet)
         run: |
-          .\vcpkg\vcpkg install
+          .\vcpkg\vcpkg install --triplet x64-windows-static
+
+      - name: Explicitly install opus/libvpx/libyuv via vcpkg (static triplet)
+        run: |
+          .\vcpkg\vcpkg install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static
+
+      - name: Install LLVM/Clang
+        run: |
+          choco install llvm -y
 
       - name: Build (cargo)
         env:
@@ -47,5 +55,3 @@ jobs:
         with:
           name: rustdesk-windows-exe
           path: target\release\rustdesk.exe
-
-
