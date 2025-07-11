@@ -20,11 +20,18 @@ jobs:
       - name: Set up MSVC build tools
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Install vcpkg & RustDesk dependencies
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg install opus:x64-windows-static
+
       - name: Build (cargo)
         env:
           RELAY_SERVER: rust.northwoodscomputerguy.com
           RENDEZVOUS_SERVER: rust.northwoodscomputerguy.com
           KEY: sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
           cargo build --release --locked
 
@@ -33,5 +40,3 @@ jobs:
         with:
           name: rustdesk-windows-exe
           path: target\release\rustdesk.exe
-
-
