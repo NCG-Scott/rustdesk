@@ -1,0 +1,56 @@
+name: Build RustDesk Windows Client
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up MSVC build tools
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install dependencies (winget)
+        run: |
+          winget install -e --id Python.Python.3.11
+          winget install -e --id Git.Git
+          winget install -e --id GitHub.GitLFS
+          winget install -e --id Kitware.CMake
+          winget install -e --id LLVM.LLVM
+          winget install -e --id Ninja-build.Ninja
+
+      - name: Configure RustDesk servers
+        run: |
+          # These lines set your custom servers in code before build
+          # Adjust paths if needed based on project structure or RustDesk upstream changes
+
+          # Set relay/rendezvous servers
+          $file = "src\config\config.rs"
+          (Get-Content $file) -replace 'const DEFAULT_RELAY_SERVER: &str = ".*";', 'const DEFAULT_RELAY_SERVER: &str = "rust.northwoodscomputerguy.com";' |
+            Set-Content $file
+          (Get-Content $file) -replace 'const DEFAULT_RENDEZVOUS_SERVER: &str = ".*";', 'const DEFAULT_RENDEZVOUS_SERVER: &str = "rust.northwoodscomputerguy.com";' |
+            Set-Content $file
+
+          # Set public key
+          (Get-Content $file) -replace 'const DEFAULT_KEY: &str = ".*";', 'const DEFAULT_KEY: &str = "sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=";' |
+            Set-Content $file
+
+      - name: Build (cargo)
+        run: |
+          cargo build --release --locked
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-windows-exe
+          path: target\release\rustdesk.exe
