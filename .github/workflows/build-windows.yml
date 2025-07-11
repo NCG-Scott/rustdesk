@@ -21,7 +21,6 @@ jobs:
       - name: Set up MSVC build tools
         uses: ilammy/msvc-dev-cmd@v1
 
-      # Split vcpkg steps for better logs/troubleshooting
       - name: Clone vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git
@@ -30,11 +29,10 @@ jobs:
         run: |
           .\vcpkg\bootstrap-vcpkg.bat
 
-      - name: Install opus via vcpkg
+      - name: Install RustDesk dependencies via vcpkg (manifest mode)
         run: |
-          .\vcpkg\vcpkg install opus:x64-windows-static
+          .\vcpkg\vcpkg install
 
-      # The actual build step, with your pre-configured servers
       - name: Build (cargo)
         env:
           RELAY_SERVER: rust.northwoodscomputerguy.com
@@ -49,4 +47,5 @@ jobs:
         with:
           name: rustdesk-windows-exe
           path: target\release\rustdesk.exe
+
 
