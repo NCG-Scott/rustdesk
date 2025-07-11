@@ -20,17 +20,11 @@ jobs:
       - name: Set up MSVC build tools
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Configure RustDesk servers
-        run: |
-          $file = "src\config\config.rs"
-          (Get-Content $file) -replace 'const DEFAULT_RELAY_SERVER: &str = ".*";', 'const DEFAULT_RELAY_SERVER: &str = "rust.northwoodscomputerguy.com";' |
-            Set-Content $file
-          (Get-Content $file) -replace 'const DEFAULT_RENDEZVOUS_SERVER: &str = ".*";', 'const DEFAULT_RENDEZVOUS_SERVER: &str = "rust.northwoodscomputerguy.com";' |
-            Set-Content $file
-          (Get-Content $file) -replace 'const DEFAULT_KEY: &str = ".*";', 'const DEFAULT_KEY: &str = "sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=";' |
-            Set-Content $file
-
       - name: Build (cargo)
+        env:
+          RELAY_SERVER: rust.northwoodscomputerguy.com
+          RENDEZVOUS_SERVER: rust.northwoodscomputerguy.com
+          KEY: sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=
         run: |
           cargo build --release --locked
 
@@ -39,4 +33,5 @@ jobs:
         with:
           name: rustdesk-windows-exe
           path: target\release\rustdesk.exe
+
 
