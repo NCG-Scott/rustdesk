@@ -39,6 +39,10 @@ jobs:
         run: |
           .\vcpkg\vcpkg install --triplet x64-windows-static
 
+      - name: Force classic opus/libvpx/libyuv install (CI workaround)
+        run: |
+          .\vcpkg\vcpkg install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static --classic
+
       - name: Install LLVM/Clang
         run: |
           choco install llvm -y
@@ -57,3 +61,4 @@ jobs:
         with:
           name: rustdesk-windows-exe
           path: target\release\rustdesk.exe
+
