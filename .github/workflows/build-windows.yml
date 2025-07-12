@@ -52,22 +52,19 @@ jobs:
         with:
           channel: "stable"
 
-      - name: Build RustDesk Windows GUI (xtask)
-        env:
-          RELAY_SERVER: rust.northwoodscomputerguy.com
-          RENDEZVOUS_SERVER: rust.northwoodscomputerguy.com
-          KEY: sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=
-          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+      - name: Build RustDesk Windows GUI (Flutter)
+        working-directory: flutter
         run: |
-          cargo run -p xtask -- build --release --platform windows
+          flutter build windows
 
-      # Debug step: show all EXEs under target (can be removed later)
+      # Debug step: show all EXEs under the Release build folder (can be removed later)
       - name: List built EXEs for artifact path debugging
         run: |
-          Get-ChildItem -Path target -Recurse -Filter *.exe
+          Get-ChildItem -Path flutter\build\windows\runner\Release -Recurse -Filter *.exe
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: rustdesk-windows-exe
-          path: target/release/bundle/windows/rustdesk.exe
+          path: flutter/build/windows/runner/Release/rustdesk.exe
+
