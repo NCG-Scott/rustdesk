@@ -21,6 +21,12 @@ jobs:
       - name: Set up MSVC build tools
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Ensure vcpkg.json has correct dependencies (opus, libvpx, libyuv)
+        run: |
+          $json = Get-Content vcpkg.json | ConvertFrom-Json
+          $json.dependencies = @("opus", "libvpx", "libyuv")
+          $json | ConvertTo-Json -Depth 10 | Set-Content vcpkg.json
+
       - name: Clone vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git
