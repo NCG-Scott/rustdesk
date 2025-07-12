@@ -28,43 +28,48 @@ jobs:
           $json | ConvertTo-Json -Depth 10 | Set-Content vcpkg.json
 
       - name: Clone vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git
+        run: git clone https://github.com/microsoft/vcpkg.git
 
       - name: Bootstrap vcpkg
-        run: |
-          .\vcpkg\bootstrap-vcpkg.bat
+        run: .\vcpkg\bootstrap-vcpkg.bat
 
       - name: Install RustDesk dependencies via vcpkg (manifest mode, static triplet)
-        run: |
-          .\vcpkg\vcpkg install --triplet x64-windows-static
+        run: .\vcpkg\vcpkg install --triplet x64-windows-static
 
       - name: Force classic opus/libvpx/libyuv/aom install (CI workaround)
-        run: |
-          .\vcpkg\vcpkg install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static aom:x64-windows-static --classic
+        run: .\vcpkg\vcpkg install opus:x64-windows-static libvpx:x64-windows-static libyuv:x64-windows-static aom:x64-windows-static --classic
 
       - name: Install LLVM/Clang
-        run: |
-          choco install llvm -y
+        run: choco install llvm -y
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
 
+      - name: Get Flutter dependencies
+        working-directory: flutter
+        run: flutter pub get
+
+      - name: Generate FFI bridge files
+        working-directory: flutter
+        shell: pwsh
+        run: |
+          try { flutter pub run ffigen --config ffigen.yaml } catch {}
+          if (Test-Path ./gen_bridge_files.bat) { ./gen_bridge_files.bat }
+
       - name: Build RustDesk Windows GUI (Flutter)
         working-directory: flutter
-        run: |
-          flutter build windows
+        run: flutter build windows
 
       # Debug step: show all EXEs under the Release build folder (can be removed later)
       - name: List built EXEs for artifact path debugging
-        run: |
-          Get-ChildItem -Path flutter\build\windows\runner\Release -Recurse -Filter *.exe
+        run: Get-ChildItem -Path flutter\build\windows\runner\Release -Recurse -Filter *.exe
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: rustdesk-windows-exe
           path: flutter/build/windows/runner/Release/rustdesk.exe
+
 
