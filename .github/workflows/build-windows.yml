@@ -61,10 +61,13 @@ jobs:
         run: |
           cargo xtask build --release --platform windows
 
+      # Debug step: show all EXEs under target (can be removed later)
+      - name: List built EXEs for artifact path debugging
+        run: |
+          Get-ChildItem -Path target -Recurse -Filter *.exe
+
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: rustdesk-windows-exe
-          # Check the xtask build output path after first run.
-          path: target\release\rustdesk.exe
-
+          path: target/release/bundle/windows/rustdesk.exe
