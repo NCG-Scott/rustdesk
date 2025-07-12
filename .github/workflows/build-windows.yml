@@ -59,7 +59,7 @@ jobs:
           KEY: sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: |
-          cargo xtask build --release --platform windows
+          cargo run -p xtask -- build --release --platform windows
 
       # Debug step: show all EXEs under target (can be removed later)
       - name: List built EXEs for artifact path debugging
