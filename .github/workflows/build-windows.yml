@@ -51,11 +51,10 @@ jobs:
         working-directory: flutter
         run: flutter pub get
 
-      - name: Generate FFI bridge files
+      - name: Generate FFI bridge files (RustDesk native script)
         working-directory: flutter
         shell: pwsh
         run: |
-          try { flutter pub run ffigen --config ffigen.yaml } catch {}
           if (Test-Path ./gen_bridge_files.bat) { ./gen_bridge_files.bat }
 
       - name: Build RustDesk Windows GUI (Flutter)
