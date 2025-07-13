@@ -56,6 +56,8 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path ./gen_bridge_files.bat) { ./gen_bridge_files.bat }
+          if (Test-Path ./gen_bridge_files.ps1) { ./gen_bridge_files.ps1 }
+          if (Test-Path ./gen_bridge_files.sh) { bash ./gen_bridge_files.sh }
 
       - name: Build RustDesk Windows GUI (Flutter)
         working-directory: flutter
@@ -70,5 +72,3 @@ jobs:
         with:
           name: rustdesk-windows-exe
           path: flutter/build/windows/runner/Release/rustdesk.exe
-
-
