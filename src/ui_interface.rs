@@ -111,7 +111,11 @@ pub fn install_me(_options: String, _path: String, _silent: bool, _debug: bool) 
         crate::ncg_defaults::spawn_relaunch_helper();
         let res = crate::platform::windows::install_me(&_options, _path, _silent, _debug);
         crate::ncg_defaults::trace(&format!("install_me finished ok={} {:?}", res.is_ok(), res.as_ref().err()));
-        allow_err!(res);
+        if let Err(e) = &res {
+            LocalConfig::set_option("ncg-install-error".to_owned(), e.to_string());
+            allow_err!(res);
+            return;
+        }
         std::process::exit(0);
     });
 }

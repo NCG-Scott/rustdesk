@@ -6,6 +6,7 @@ import 'package:flutter_hbb/models/platform_model.dart';
 
 const _kInstallDeclinedOption = 'ncg-install-declined';
 const _kInstallOptions = 'startmenu desktopicon';
+const _kInstallErrorOption = 'ncg-install-error';
 
 Future<void> _install() async {
   await bind.mainSetLocalOption(key: _kInstallDeclinedOption, value: '');
@@ -93,7 +94,49 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
   Future<void> _startInstall() async {
     _showProgress('The NCG remote assistance tool is installing',
         'This will take a few seconds. If Windows asks for permission, choose Yes. This window will reopen when it is done.');
+    await bind.mainSetLocalOption(key: _kInstallErrorOption, value: '');
     await _install();
+    _watchInstall();
+  }
+
+  Future<void> _watchInstall() async {
+    while (mounted) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      final error = bind.mainGetLocalOption(key: _kInstallErrorOption);
+      if (error.isNotEmpty) {
+        Navigator.of(context).pop();
+        _showInstallFailed(error);
+        return;
+      }
+    }
+  }
+
+  void _showInstallFailed(String detail) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(translate('NCG Remote was not installed')),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(translate(
+                  'The installation was cancelled or did not finish. Nothing was changed. You can try again with the Install button, or keep using NCG Remote from this window.')),
+              const SizedBox(height: 12),
+              Text(detail, style: const TextStyle(fontSize: 11)),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(translate('OK'))),
+        ],
+      ),
+    );
   }
 
   void _showProgress(String title, String body) {
