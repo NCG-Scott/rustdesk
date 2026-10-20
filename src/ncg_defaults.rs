@@ -4,6 +4,7 @@ use hbb_common::config;
 const SERVER_HOST: &str = "rust.northwoodscomputerguy.com";
 const RELAY_SERVER: &str = "rust.northwoodscomputerguy.com:21117";
 const PUBLIC_KEY: &str = "sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=";
+const APP_NAME: &str = "NCG_Remote_Assistance";
 
 #[cfg(windows)]
 pub fn trace(msg: &str) {
@@ -73,6 +74,9 @@ pub fn uninstall_cleanup_cmds() -> String {
 }
 
 pub fn apply() {
+    if let Ok(mut app) = config::APP_NAME.write() {
+        *app = APP_NAME.to_owned();
+    }
     let Ok(mut overwrite) = config::OVERWRITE_SETTINGS.write() else {
         hbb_common::log::error!("NCG defaults: settings lock poisoned");
         return;
