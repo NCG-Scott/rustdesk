@@ -11,6 +11,7 @@ import 'package:flutter_hbb/common/widgets/setting_widgets.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_tab_page.dart';
+import 'package:flutter_hbb/desktop/pages/ncg_developer.dart';
 import 'package:flutter_hbb/desktop/widgets/remote_toolbar.dart';
 import 'package:flutter_hbb/mobile/widgets/dialog.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
@@ -56,11 +57,12 @@ enum SettingsTabKey {
   account,
   printer,
   about,
+  ncgDeveloper,
 }
 
 class DesktopSettingPage extends StatefulWidget {
   final SettingsTabKey initialTabkey;
-  static final List<SettingsTabKey> tabKeys = [
+  static List<SettingsTabKey> get tabKeys => ncgSettingsTabs([
     if (bind.mainGetBuildinOption(key: kOptionHideGeneralSetting) != 'Y')
       SettingsTabKey.general,
     if (!isWeb &&
@@ -78,7 +80,7 @@ class DesktopSettingPage extends StatefulWidget {
         bind.mainGetBuildinOption(key: kOptionHideRemotePrinterSetting) != 'Y')
       SettingsTabKey.printer,
     SettingsTabKey.about,
-  ];
+  ]);
 
   DesktopSettingPage({Key? key, required this.initialTabkey}) : super(key: key);
 
@@ -212,6 +214,10 @@ class _DesktopSettingPageState extends State<DesktopSettingPage>
           settingTabs
               .add(_TabInfo(tab, 'About', Icons.info_outline, Icons.info));
           break;
+        case SettingsTabKey.ncgDeveloper:
+          settingTabs.add(_TabInfo(tab, 'Developer mode',
+              Icons.code_outlined, Icons.code));
+          break;
       }
     }
     return settingTabs;
@@ -241,6 +247,9 @@ class _DesktopSettingPageState extends State<DesktopSettingPage>
           break;
         case SettingsTabKey.about:
           children.add(const _About());
+          break;
+        case SettingsTabKey.ncgDeveloper:
+          children.add(const NcgDeveloperSettings());
           break;
       }
     }
