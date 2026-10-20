@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common.dart';
 import 'package:flutter_hbb/desktop/pages/connection_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_setting_page.dart';
 import 'package:flutter_hbb/desktop/pages/ncg_install.dart';
+import 'package:flutter_hbb/desktop/pages/ncg_xp.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
 import 'package:flutter_hbb/models/server_model.dart';
 import 'package:get/get.dart';
@@ -63,64 +63,62 @@ class NcgCustomerPage extends StatelessWidget {
     return ChangeNotifierProvider.value(
       value: gFFI.serverModel,
       child: Consumer<ServerModel>(builder: (context, model, _) {
-        final theme = Theme.of(context);
         return Container(
-          color: theme.colorScheme.background,
+          color: Colors.white,
           child: Column(
             children: [
+              const NcgBanner(),
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 560),
+                      constraints: const BoxConstraints(maxWidth: 680),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(translate('Read these two things to your technician'),
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.headlineSmall),
-                          const SizedBox(height: 8),
+                          IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: NcgCard(
+                                    label: translate('Your ID'),
+                                    children: [
+                                      const SizedBox(height: 10),
+                                      _NcgValue(
+                                          controller: model.serverId,
+                                          size: 40),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: NcgCard(
+                                    label: translate('One-time password'),
+                                    children: [
+                                      _NcgValue(
+                                          controller: model.serverPasswd,
+                                          size: 30),
+                                      const SizedBox(height: 8),
+                                      NcgXpButton(
+                                          label: translate('New password'),
+                                          primary: true,
+                                          onPressed: () => bind
+                                              .mainUpdateTemporaryPassword()),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 22),
                           Text(
                               translate(
-                                  'You do not need to type anything. Your technician connects from their side.'),
+                                  'Contact your Northwoods Computer Guy at $kNcgPhone to start your remote assistance session.'),
                               textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium),
-                          const SizedBox(height: 24),
-                          _NcgField(
-                            label: translate('Your ID'),
-                            controller: model.serverId,
-                            actions: [
-                              _NcgButton(
-                                  label: translate('Copy'),
-                                  filled: false,
-                                  onPressed: () => _copy(model.serverId.text)),
-                            ],
-                          ),
+                              style: ncgText(18)),
                           const SizedBox(height: 16),
-                          _NcgField(
-                            label: translate('Your password'),
-                            controller: model.serverPasswd,
-                            actions: [
-                              _NcgButton(
-                                  label: translate('Copy'),
-                                  filled: false,
-                                  onPressed: () =>
-                                      _copy(model.serverPasswd.text)),
-                              _NcgButton(
-                                  label: translate('New password'),
-                                  filled: true,
-                                  onPressed: () =>
-                                      bind.mainUpdateTemporaryPassword()),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                              translate(
-                                  'A new password is made each time this window opens, and you can make another at any time.'),
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodySmall),
-                          const SizedBox(height: 12),
                           const NcgInstallSection(),
                         ],
                       ),
@@ -128,95 +126,30 @@ class NcgCustomerPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: OnlineStatusWidget()),
-              ),
+              const NcgStatusBar(),
             ],
           ),
         );
       }),
     );
   }
-
-  void _copy(String text) {
-    Clipboard.setData(ClipboardData(text: text));
-    showToast(translate('Copied'));
-  }
 }
 
-class _NcgField extends StatelessWidget {
-  final String label;
+class _NcgValue extends StatelessWidget {
   final TextEditingController controller;
-  final List<Widget> actions;
-  const _NcgField(
-      {required this.label, required this.controller, required this.actions});
+  final double size;
+  const _NcgValue({required this.controller, required this.size});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border.all(color: theme.dividerColor),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label.toUpperCase(),
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 300),
-                child: TextField(
-                  controller: controller,
-                  readOnly: true,
-                  decoration: const InputDecoration(
-                      border: InputBorder.none, filled: false),
-                  style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5),
-                ),
-              ),
-              Wrap(spacing: 8, runSpacing: 8, children: actions),
-            ],
-          ),
-        ],
-      ),
+    return TextField(
+      controller: controller,
+      readOnly: true,
+      textAlign: TextAlign.center,
+      decoration: const InputDecoration(
+          border: InputBorder.none, filled: false, isDense: true),
+      style: ncgText(size, bold: true),
     );
-  }
-}
-
-class _NcgButton extends StatelessWidget {
-  final String label;
-  final bool filled;
-  final VoidCallback onPressed;
-  const _NcgButton(
-      {required this.label, required this.filled, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final style = ButtonStyle(
-        minimumSize: MaterialStateProperty.all(const Size(0, 44)),
-        textStyle: MaterialStateProperty.all(
-            const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)));
-    return filled
-        ? ElevatedButton(onPressed: onPressed, style: style, child: Text(label))
-        : OutlinedButton(onPressed: onPressed, style: style, child: Text(label));
   }
 }
 

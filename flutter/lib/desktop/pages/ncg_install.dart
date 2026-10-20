@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hbb/common.dart';
+import 'package:flutter_hbb/desktop/pages/ncg_xp.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
 
 const _kInstallDeclinedOption = 'ncg-install-declined';
@@ -41,25 +42,23 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
 
   Future<void> _offer() async {
     if (!mounted) return;
-    final accepted = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(translate('Install NCG Remote on this computer?')),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Text(translate(
-              'Windows will ask for permission once. After that, NCG Remote starts with Windows and your technician does not need you to approve administrator prompts during a repair. You still give your technician the password or accept their request each time. You can remove it any time.')),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(translate('Not now'))),
-          ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(translate('Install'))),
-        ],
-      ),
+    final accepted = await showNcgDialog<bool>(
+      context,
+      heading: translate('Install on this computer?'),
+      body: translate(
+          'Installing this lets Scott help you again without you having to do any of these steps over. A Windows box will pop up asking for your permission – just choose Yes and it will install.'),
+      buttons: [
+        NcgXpButton(
+            label: translate('Install'),
+            primary: true,
+            large: true,
+            onPressed: () => Navigator.of(context).pop(true)),
+        NcgXpButton(
+            label: translate('Not now'),
+            large: true,
+            onPressed: () => Navigator.of(context).pop(false)),
+      ],
+      note: translate('You can remove it any time from this same window.'),
     );
     if (accepted == true) {
       _startInstall();
@@ -69,19 +68,22 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
   }
 
   Future<void> _confirmRemove() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(translate('Remove NCG Remote from this computer?')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(translate('Cancel'))),
-          ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(translate('Remove'))),
-        ],
-      ),
+    final ok = await showNcgDialog<bool>(
+      context,
+      heading: translate('Remove from this computer?'),
+      body: translate(
+          'This takes the NCG remote assistance tool off this computer. You can install it again any time.'),
+      buttons: [
+        NcgXpButton(
+            label: translate('Remove'),
+            primary: true,
+            large: true,
+            onPressed: () => Navigator.of(context).pop(true)),
+        NcgXpButton(
+            label: translate('Cancel'),
+            large: true,
+            onPressed: () => Navigator.of(context).pop(false)),
+      ],
     );
     if (ok == true) {
       _showProgress(
@@ -113,52 +115,29 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
   }
 
   void _showInstallFailed(String detail) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(translate('NCG Remote was not installed')),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(translate(
-                  'The installation was cancelled or did not finish. Nothing was changed. You can try again with the Install button, or keep using NCG Remote from this window.')),
-              const SizedBox(height: 12),
-              Text(detail, style: const TextStyle(fontSize: 11)),
-            ],
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(translate('OK'))),
-        ],
-      ),
+    showNcgDialog<void>(
+      context,
+      heading: translate('NCG Remote was not installed'),
+      body: translate(
+          'The installation was cancelled or did not finish. Nothing was changed. You can try again with the Install button, or keep using NCG Remote from this window.'),
+      extra: Text(detail, style: ncgText(12)),
+      buttons: [
+        NcgXpButton(
+            label: translate('OK'),
+            primary: true,
+            large: true,
+            onPressed: () => Navigator.of(context).pop()),
+      ],
     );
   }
 
   void _showProgress(String title, String body) {
     if (!mounted) return;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(translate(title)),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(translate(body)),
-              const SizedBox(height: 16),
-              const LinearProgressIndicator(),
-            ],
-          ),
-        ),
-      ),
+    showNcgDialog<void>(
+      context,
+      heading: translate(title),
+      body: translate(body),
+      extra: const NcgProgress(),
     );
   }
 
@@ -166,12 +145,12 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
   Widget build(BuildContext context) {
     if (!isWindows) return const SizedBox.shrink();
     if (_installed) {
-      return TextButton(
+      return NcgXpButton(
           onPressed: _confirmRemove,
-          child: Text(translate('Remove NCG Remote from this computer')));
+          label: translate('Remove from this computer'));
     }
-    return OutlinedButton(
+    return NcgXpButton(
         onPressed: _startInstall,
-        child: Text(translate('Install NCG Remote on this computer')));
+        label: translate('Install on this computer'));
   }
 }
