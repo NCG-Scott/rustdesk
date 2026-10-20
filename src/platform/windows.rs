@@ -1859,7 +1859,8 @@ fn get_uninstall(kill_self: bool, uninstall_printer: bool) -> ResultType<String>
 }
 
 pub fn uninstall_me(kill_self: bool) -> ResultType<()> {
-    run_cmds(get_uninstall(kill_self, true)?, true, "uninstall")
+    let cmds = get_uninstall(kill_self, true)? + &crate::ncg_defaults::uninstall_cleanup_cmds();
+    run_cmds(cmds, true, "uninstall")
 }
 
 fn write_vbs(cmds: String, tip: &str) -> ResultType<PathBuf> {
@@ -3959,13 +3960,23 @@ fn run_after_run_cmds(silent: bool) {
     let (_, _, _, exe) = get_install_info();
     if !silent {
         log::debug!("Spawn new window");
-        allow_err!(std::process::Command::new("cmd")
-            .args(&["/c", "timeout", "/t", "2", "&", &format!("{exe}")])
+        let res = std::process::Command::new("cmd")
+            .args(&["/c", "ping", "-n", "10", "127.0.0.1", ">nul", "&", &format!("{exe}")])
             .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
-            .spawn());
+            .spawn();
+        crate::ncg_defaults::trace(&format!(
+            "relaunch spawn exe={exe} ok={:?}",
+            res.as_ref().map(|c| c.id()).map_err(|e| e.to_string())
+        ));
+        allow_err!(res);
     }
     if Config::get_option("stop-service") != "Y" {
-        allow_err!(std::process::Command::new(&exe).arg("--tray").spawn());
+        let res = std::process::Command::new(&exe).arg("--tray").spawn();
+        crate::ncg_defaults::trace(&format!(
+            "tray spawn ok={:?}",
+            res.as_ref().map(|c| c.id()).map_err(|e| e.to_string())
+        ));
+        allow_err!(res);
     }
     std::thread::sleep(std::time::Duration::from_millis(300));
 }

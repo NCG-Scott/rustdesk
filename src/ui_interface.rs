@@ -107,9 +107,11 @@ pub fn goto_install() {
 pub fn install_me(_options: String, _path: String, _silent: bool, _debug: bool) {
     #[cfg(windows)]
     std::thread::spawn(move || {
-        allow_err!(crate::platform::windows::install_me(
-            &_options, _path, _silent, _debug
-        ));
+        crate::ncg_defaults::trace("install_me start");
+        crate::ncg_defaults::spawn_relaunch_helper();
+        let res = crate::platform::windows::install_me(&_options, _path, _silent, _debug);
+        crate::ncg_defaults::trace(&format!("install_me finished ok={}", res.is_ok()));
+        allow_err!(res);
         std::process::exit(0);
     });
 }

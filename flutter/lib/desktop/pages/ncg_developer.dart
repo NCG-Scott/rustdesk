@@ -7,6 +7,7 @@ import 'package:flutter_hbb/common.dart';
 import 'package:flutter_hbb/desktop/pages/connection_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_setting_page.dart';
+import 'package:flutter_hbb/desktop/pages/ncg_install.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
 import 'package:flutter_hbb/models/server_model.dart';
 import 'package:get/get.dart';
@@ -119,6 +120,8 @@ class NcgCustomerPage extends StatelessWidget {
                                   'A new password is made each time this window opens, and you can make another at any time.'),
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodySmall),
+                          const SizedBox(height: 12),
+                          const NcgInstallSection(),
                         ],
                       ),
                     ),
@@ -156,6 +159,7 @@ class _NcgField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
@@ -180,7 +184,8 @@ class _NcgField extends StatelessWidget {
                 child: TextField(
                   controller: controller,
                   readOnly: true,
-                  decoration: const InputDecoration(border: InputBorder.none),
+                  decoration: const InputDecoration(
+                      border: InputBorder.none, filled: false),
                   style: const TextStyle(
                       fontSize: 38,
                       fontWeight: FontWeight.bold,
