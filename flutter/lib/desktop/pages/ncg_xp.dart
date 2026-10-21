@@ -133,14 +133,14 @@ class NcgCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      padding: const EdgeInsets.fromLTRB(16, 22, 16, 26),
       decoration: BoxDecoration(
           color: Colors.white, border: Border.all(color: _cardBorder)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: ncgText(18, bold: true, color: _heading)),
-          const SizedBox(height: 6),
+          Text(label, style: ncgText(24, bold: true, color: _heading)),
+          const SizedBox(height: 10),
           ...children,
         ],
       ),

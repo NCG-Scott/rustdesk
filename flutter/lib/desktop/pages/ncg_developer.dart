@@ -73,7 +73,7 @@ class NcgCustomerPage extends StatelessWidget {
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 680),
+                      constraints: const BoxConstraints(maxWidth: 740),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -85,10 +85,10 @@ class NcgCustomerPage extends StatelessWidget {
                                   child: NcgCard(
                                     label: translate('Your ID'),
                                     children: [
-                                      const SizedBox(height: 10),
+                                      const SizedBox(height: 22),
                                       _NcgValue(
                                           controller: model.serverId,
-                                          size: 40),
+                                          size: 52),
                                     ],
                                   ),
                                 ),
@@ -99,8 +99,8 @@ class NcgCustomerPage extends StatelessWidget {
                                     children: [
                                       _NcgValue(
                                           controller: model.serverPasswd,
-                                          size: 30),
-                                      const SizedBox(height: 8),
+                                          size: 38),
+                                      const SizedBox(height: 12),
                                       NcgXpButton(
                                           label: translate('New password'),
                                           primary: true,
@@ -112,13 +112,13 @@ class NcgCustomerPage extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 22),
+                          const SizedBox(height: 34),
                           Text(
                               translate(
                                   'Contact your Northwoods Computer Guy at $kNcgPhone to start your remote assistance session.'),
                               textAlign: TextAlign.center,
-                              style: ncgText(18)),
-                          const SizedBox(height: 16),
+                              style: ncgText(22)),
+                          const SizedBox(height: 24),
                           const NcgInstallSection(),
                         ],
                       ),
