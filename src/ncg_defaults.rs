@@ -50,7 +50,7 @@ pub fn spawn_relaunch_helper() {
 // so a newer Setup never silently opens an older install.
 // Our own version, bumped with kNcgVersion and libs/portable. Stored as the installed
 // program's DisplayVersion so a newer Setup can tell it is an upgrade.
-pub const NCG_VERSION: &str = "1.5.0.8";
+pub const NCG_VERSION: &str = "1.5.0.9";
 
 #[cfg(windows)]
 fn installed_version() -> String {

@@ -56,11 +56,11 @@ class NcgHomePage extends StatelessWidget {
             ),
           ),
           if (ncgDeveloperMode.value) ...[
-            // centred in the 200 px left pane, just above the status bar
+            // centred in the 200 px left pane, near the bottom
             const Positioned(
                 left: 0,
                 width: 200,
-                bottom: 56,
+                bottom: 12,
                 child: Center(child: NcgInstallSection(removeOnly: true))),
             Positioned(
               right: 16,
