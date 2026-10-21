@@ -14,9 +14,9 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 const _kDevModeOption = 'ncg-developer-mode';
-// sha256("ncg-remote:" + password). Test password is "ncg-test"; replace before release.
+// sha256("ncg-remote:" + password)
 const _kDevPasswordSha256 =
-    '9094b6a36ba2e4dbe39382ab2a27bbbae2cd4e77639e3b660cf00a29a7d1b019';
+    '5ff968b5a49817ed3364ebe752b6e45cd02caf2a5274efb7ffc846dffc7fe9ad';
 
 final RxBool ncgDeveloperMode =
     (bind.mainGetLocalOption(key: _kDevModeOption) == 'Y').obs;
