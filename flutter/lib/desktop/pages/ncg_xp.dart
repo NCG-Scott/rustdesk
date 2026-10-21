@@ -34,7 +34,7 @@ TextStyle ncgText(double size,
 
 /// Wallpaper banner with the NCG badge and product name.
 /// Shown bottom-right of the banner; bump with each NCG release.
-const kNcgVersion = 'v1.5.1';
+const kNcgVersion = 'v1.5.0.1';
 
 class NcgBanner extends StatelessWidget {
   const NcgBanner({Key? key}) : super(key: key);

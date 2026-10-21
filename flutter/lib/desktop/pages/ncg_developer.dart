@@ -104,18 +104,20 @@ class NcgCustomerPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Expanded(
+                                  flex: 3,
                                   child: NcgCard(
                                     label: translate('Your ID'),
                                     children: [
                                       const SizedBox(height: 22),
                                       _NcgValue(
                                           controller: model.serverId,
-                                          size: 52),
+                                          size: 44),
                                     ],
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
+                                  flex: 2,
                                   child: NcgCard(
                                     label: translate('One-time password'),
                                     children: [

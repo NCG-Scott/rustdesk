@@ -152,7 +152,8 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
     if (_installed) {
       return NcgXpButton(
           onPressed: _confirmRemove,
-          label: translate('Remove from this computer'));
+          label: translate(
+              widget.removeOnly ? 'Uninstall RA' : 'Remove from this computer'));
     }
     return NcgXpButton(
         onPressed: _startInstall,
