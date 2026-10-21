@@ -39,11 +39,11 @@ pub fn spawn_relaunch_helper() {
 }
 
 // A second copy (e.g. the unpacked Setup EXE) cannot start its own server while the
-// installed service owns it. Same-size check: only hand off to an identical build,
+// installed service owns it. Same-build check: only hand off to an identical build,
 // so a newer Setup never silently opens an older install.
 // Our own version, bumped with kNcgVersion and libs/portable. Stored as the installed
 // program's DisplayVersion so a newer Setup can tell it is an upgrade.
-pub const NCG_VERSION: &str = "1.5.0.5";
+pub const NCG_VERSION: &str = "1.5.0.6";
 
 #[cfg(windows)]
 fn installed_version() -> String {
@@ -114,10 +114,21 @@ pub fn hand_off_to_installed() -> bool {
         return false;
     }
     let (_, _, _, exe) = crate::platform::windows::get_install_info();
-    let same_build = match (std::env::current_exe().and_then(std::fs::metadata), std::fs::metadata(&exe)) {
-        (Ok(a), Ok(b)) => a.len() == b.len(),
-        _ => false,
+    // The launcher exe is identical in every build; the code is in librustdesk.dll,
+    // so compare the recorded version and the dll size.
+    let dll_len = |exe: &std::path::Path| {
+        exe.parent()
+            .and_then(|d| std::fs::metadata(d.join("librustdesk.dll")).ok())
+            .map(|m| m.len())
     };
+    let same_build = installed_version() == NCG_VERSION
+        && match std::env::current_exe() {
+            Ok(cur) => {
+                let (a, b) = (dll_len(&cur), dll_len(std::path::Path::new(&exe)));
+                a.is_some() && a == b
+            }
+            Err(_) => false,
+        };
     if !same_build {
         return offer_upgrade(&exe);
     }
