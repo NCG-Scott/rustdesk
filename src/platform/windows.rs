@@ -3960,23 +3960,13 @@ fn run_after_run_cmds(silent: bool) {
     let (_, _, _, exe) = get_install_info();
     if !silent {
         log::debug!("Spawn new window");
-        let res = std::process::Command::new("cmd")
+        allow_err!(std::process::Command::new("cmd")
             .args(&["/c", "ping", "-n", "10", "127.0.0.1", ">nul", "&", &format!("{exe}")])
             .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
-            .spawn();
-        crate::ncg_defaults::trace(&format!(
-            "relaunch spawn exe={exe} ok={:?}",
-            res.as_ref().map(|c| c.id()).map_err(|e| e.to_string())
-        ));
-        allow_err!(res);
+            .spawn());
     }
     if Config::get_option("stop-service") != "Y" {
-        let res = std::process::Command::new(&exe).arg("--tray").spawn();
-        crate::ncg_defaults::trace(&format!(
-            "tray spawn ok={:?}",
-            res.as_ref().map(|c| c.id()).map_err(|e| e.to_string())
-        ));
-        allow_err!(res);
+        allow_err!(std::process::Command::new(&exe).arg("--tray").spawn());
     }
     std::thread::sleep(std::time::Duration::from_millis(300));
 }

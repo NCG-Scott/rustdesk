@@ -7,26 +7,6 @@ const PUBLIC_KEY: &str = "sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=";
 const APP_NAME: &str = "NCG_Remote_Assistance";
 
 #[cfg(windows)]
-pub fn trace(msg: &str) {
-    use std::io::Write;
-    let dir = "C:\\ProgramData\\NCG";
-    let _ = std::fs::create_dir_all(dir);
-    if let Ok(mut f) = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(format!("{dir}\\ncg_trace.log"))
-    {
-        let _ = writeln!(
-            f,
-            "{} pid={} {}",
-            chrono::Local::now().format("%H:%M:%S%.3f"),
-            std::process::id(),
-            msg
-        );
-    }
-}
-
-#[cfg(windows)]
 pub fn spawn_relaunch_helper() {
     use std::os::windows::process::CommandExt;
     let app = config::APP_NAME
@@ -37,17 +17,16 @@ pub fn spawn_relaunch_helper() {
     if app.is_empty() || exe.is_empty() || exe.contains(['%', '^', '&', '!', '"']) {
         return;
     }
-    let res = std::process::Command::new("cmd")
+    if let Err(e) = std::process::Command::new("cmd")
         .raw_arg(format!(
             "/c for /l %i in (1,1,150) do (sc query \"{app}\" | find \"RUNNING\" >nul && \
              (ping -n 7 127.0.0.1 >nul & start \"\" \"{exe}\" & exit) || ping -n 2 127.0.0.1 >nul)"
         ))
         .creation_flags(0x0800_0000)
-        .spawn();
-    trace(&format!(
-        "relaunch helper ok={:?}",
-        res.map(|c| c.id()).map_err(|e| e.to_string())
-    ));
+        .spawn()
+    {
+        hbb_common::log::warn!("relaunch helper failed: {e}");
+    }
 }
 
 #[cfg(windows)]
