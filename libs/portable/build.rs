@@ -3,7 +3,9 @@ fn main() {
     {
         use std::io::Write;
         let mut res = winres::WindowsResource::new();
-        res.set_icon("../../res/icon.ico")
+        res.set_version_info(winres::VersionInfo::FILEVERSION, 0x0001_0005_0000_0002)
+            .set_version_info(winres::VersionInfo::PRODUCTVERSION, 0x0001_0005_0000_0002)
+            .set_icon("../../res/icon.ico")
             .set_language(winapi::um::winnt::MAKELANGID(
                 winapi::um::winnt::LANG_ENGLISH,
                 winapi::um::winnt::SUBLANG_ENGLISH_US,
