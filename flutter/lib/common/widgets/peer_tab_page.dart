@@ -24,6 +24,7 @@ import 'package:pull_down_button/pull_down_button.dart';
 
 import '../../common.dart';
 import '../../models/platform_model.dart';
+import 'ncg_peers.dart';
 
 class PeerTabPage extends StatefulWidget {
   const PeerTabPage({Key? key}) : super(key: key);
@@ -562,10 +563,8 @@ class _PeerTabPageState extends State<PeerTabPage>
         child: _createMultiSelection(),
       ),
       _createPeerViewTypeSwitch(context),
-      Offstage(
-        offstage: model.currentTab == PeerTabIndex.recent.index,
-        child: PeerSortDropdown(),
-      ),
+      PeerSortDropdown(),
+      const NcgPeerTools(),
       Offstage(
         offstage: model.currentTab != PeerTabIndex.ab.index,
         child: _toggleTags(),
@@ -629,7 +628,8 @@ class _PeerTabPageState extends State<PeerTabPage>
     ];
     final List<Widget> dynamicActions = [
       if (model.currentTabCachedPeers.isNotEmpty) _createMultiSelection(),
-      if (model.currentTab != PeerTabIndex.recent.index) PeerSortDropdown(),
+      PeerSortDropdown(),
+      const NcgPeerTools(),
       if (model.currentTab == PeerTabIndex.ab.index) _toggleTags()
     ];
     final rightWidth = availableWidth -

@@ -16,6 +16,7 @@ import 'package:window_manager/window_manager.dart';
 import '../../common.dart';
 import '../../models/peer_model.dart';
 import '../../models/platform_model.dart';
+import 'ncg_peers.dart';
 import 'peer_card.dart';
 
 typedef PeerFilter = bool Function(Peer peer);
@@ -26,8 +27,12 @@ class PeerSortType {
   static const String remoteHost = 'Remote Host';
   static const String username = 'Username';
   static const String status = 'Status';
+  static const String lastUsed = 'Last used';
+  static const String name = 'Name A-Z';
 
   static List<String> values = [
+    PeerSortType.lastUsed,
+    PeerSortType.name,
     PeerSortType.remoteId,
     PeerSortType.remoteHost,
     PeerSortType.username,
@@ -263,7 +268,7 @@ class _PeersViewState extends State<_PeersView>
             // We should avoid too many rebuilds. Win10(Some machines) on Flutter 3.19.6.
             // Continious rebuilds of `ListView.builder` will cause memory leak.
             // Simple demo can reproduce this issue.
-            final Widget child = Obx(() => stateGlobal.isPortrait.isTrue
+            final Widget stockChild = Obx(() => stateGlobal.isPortrait.isTrue
                 ? ListView.builder(
                     itemCount: peers.length,
                     itemBuilder: (BuildContext context, int index) {
@@ -290,6 +295,13 @@ class _PeersViewState extends State<_PeersView>
                         itemBuilder: (BuildContext context, int index) {
                           return buildOnePeer(peers[index], false);
                         }));
+
+            // NCG: folders (recent tab only, flat while searching)
+            final Widget child = widget.peers.loadEvent == LoadEvent.recent &&
+                    filters[0].value.toString().trim().isEmpty &&
+                    ncgAnyFolders(peers)
+                ? NcgFolderView(peers: peers, buildOne: buildOnePeer)
+                : stockChild;
 
             if (updateEvent == UpdateEvent.load) {
               _curPeers.clear();
@@ -366,15 +378,19 @@ class _PeersViewState extends State<_PeersView>
 
     // fallback to id sorting
     if (!PeerSortType.values.contains(sortedBy)) {
-      sortedBy = PeerSortType.remoteId;
+      sortedBy = PeerSortType.lastUsed;
       bind.setLocalFlutterOption(
         k: kOptionPeerSorting,
         v: sortedBy,
       );
     }
 
-    if (widget.peers.loadEvent != LoadEvent.recent) {
+    {
       switch (sortedBy) {
+        case PeerSortType.name:
+          String key(Peer p) => (p.alias.isEmpty ? p.id : p.alias).toLowerCase();
+          peers.sort((p1, p2) => key(p1).compareTo(key(p2)));
+          break;
         case PeerSortType.remoteId:
           peers.sort((p1, p2) => p1.getId().compareTo(p2.getId()));
           break;

@@ -6,6 +6,15 @@ const RELAY_SERVER: &str = "rust.northwoodscomputerguy.com:21117";
 const PUBLIC_KEY: &str = "sjVK2P8Cik7MW4v6sn1FhCN5RdRAK1BpqXlSDraF0qY=";
 const APP_NAME: &str = "NCG_Remote_Assistance";
 
+// Public-facing name (shortcuts, Programs list, service, tray). APP_NAME itself must stay
+// space-free: it is the service, exe and config folder name used in unquoted commands.
+pub fn display_name() -> String {
+    config::APP_NAME
+        .read()
+        .map(|n| n.replace('_', " "))
+        .unwrap_or_default()
+}
+
 #[cfg(windows)]
 pub fn spawn_relaunch_helper() {
     use std::os::windows::process::CommandExt;

@@ -1610,6 +1610,7 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
     if versions.len() > 2 {
         version_build = versions[2];
     }
+    let disp = crate::ncg_defaults::display_name();
     let app_name = crate::get_app_name();
 
     let current_exe = std::env::current_exe()?;
@@ -1635,12 +1636,12 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
     let tmp_path = "%RUSTDESK_OUTPUT_DIR%".to_owned();
     let mk_shortcut_commands = embedded_shortcut_commands(
         shortcut_bytes(&exe, None, shortcut_icon_location.as_deref())?,
-        &format!("{app_name}.lnk"),
+        &format!("{disp}.lnk"),
         "mk_shortcut",
     );
     let uninstall_shortcut_commands = embedded_shortcut_commands(
         shortcut_bytes(&exe, Some("--uninstall"), Some("msiexec.exe"))?,
-        &format!("Uninstall {app_name}.lnk"),
+        &format!("Uninstall {disp}.lnk"),
         "uninstall_shortcut",
     );
     let tray_shortcut_commands =
@@ -1652,8 +1653,7 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
     if options.contains("desktopicon") {
         shortcuts = format!(
             "copy /Y \"{}\\{}.lnk\" \"%PUBLIC%\\Desktop\\\"",
-            tmp_path,
-            crate::get_app_name()
+            tmp_path, disp
         );
         reg_value_desktop_shortcuts = "1".to_owned();
     }
@@ -1661,8 +1661,8 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
         shortcuts = format!(
             "{shortcuts}
 md \"{start_menu}\"
-copy /Y \"{tmp_path}\\{app_name}.lnk\" \"{start_menu}\\\"
-copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{start_menu}\\\"
+copy /Y \"{tmp_path}\\{disp}.lnk\" \"{start_menu}\\\"
+copy /Y \"{tmp_path}\\Uninstall {disp}.lnk\" \"{start_menu}\\\"
      "
         );
         reg_value_start_menu_shortcuts = "1".to_owned();
@@ -1685,9 +1685,9 @@ copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{start_menu}\\\"
     // Note: without if exist, the bat may exit in advance on some Windows7 https://github.com/rustdesk/rustdesk/issues/895
     let dels = format!(
         "
-if exist \"{tmp_path}\\{app_name}.lnk\" del /f /q \"{tmp_path}\\{app_name}.lnk\"
-if exist \"{tmp_path}\\Uninstall {app_name}.lnk\" del /f /q \"{tmp_path}\\Uninstall {app_name}.lnk\"
-if exist \"{tmp_path}\\{app_name} Tray.lnk\" del /f /q \"{tmp_path}\\{app_name} Tray.lnk\"
+if exist \"{tmp_path}\\{disp}.lnk\" del /f /q \"{tmp_path}\\{disp}.lnk\"
+if exist \"{tmp_path}\\Uninstall {disp}.lnk\" del /f /q \"{tmp_path}\\Uninstall {disp}.lnk\"
+if exist \"{tmp_path}\\{disp} Tray.lnk\" del /f /q \"{tmp_path}\\{disp} Tray.lnk\"
         "
     );
     let src_exe = cur_exe.clone();
@@ -1704,7 +1704,7 @@ if exist \"{tmp_path}\\{app_name} Tray.lnk\" del /f /q \"{tmp_path}\\{app_name} 
     } else {
         format!("
 {tray_shortcut_commands}
-copy /Y \"{tmp_path}\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\"
+copy /Y \"{tmp_path}\\{disp} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\"
 ")
     };
 
@@ -1729,7 +1729,7 @@ md \"{path}\"
 {copy_exe}
 reg add {subkey} /f
 reg add {subkey} /f /v DisplayIcon /t REG_SZ /d \"{display_icon}\"
-reg add {subkey} /f /v DisplayName /t REG_SZ /d \"{app_name}\"
+reg add {subkey} /f /v DisplayName /t REG_SZ /d \"{disp}\"
 reg add {subkey} /f /v DisplayVersion /t REG_SZ /d \"{version}\"
 reg add {subkey} /f /v Version /t REG_SZ /d \"{version}\"
 reg add {subkey} /f /v BuildDate /t REG_SZ /d \"{build_date}\"
@@ -1745,7 +1745,7 @@ reg add {subkey} /f /v WindowsInstaller /t REG_DWORD /d 0
 {uninstall_shortcut_commands}
 {tray_shortcuts}
 {shortcuts}
-copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{path}\\\"
+copy /Y \"{tmp_path}\\Uninstall {disp}.lnk\" \"{path}\\\"
 {dels}
 {import_config}
 {after_install}
@@ -1849,12 +1849,12 @@ fn get_uninstall(kill_self: bool, uninstall_printer: bool) -> ResultType<String>
     {uninstall_amyuni_idd}
     if exist \"{path}\" rd /s /q \"{path}\"
     if exist \"{start_menu}\" rd /s /q \"{start_menu}\"
-    if exist \"%PUBLIC%\\Desktop\\{app_name}.lnk\" del /f /q \"%PUBLIC%\\Desktop\\{app_name}.lnk\"
-    if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\"
+    if exist \"%PUBLIC%\\Desktop\\{disp}.lnk\" del /f /q \"%PUBLIC%\\Desktop\\{disp}.lnk\"
+    if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{disp} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{disp} Tray.lnk\"
     ",
         before_uninstall=get_before_uninstall(kill_self),
         uninstall_amyuni_idd=get_uninstall_amyuni_idd(),
-        app_name = crate::get_app_name(),
+        disp = crate::ncg_defaults::display_name(),
     ))
 }
 
@@ -3291,10 +3291,11 @@ pub fn uninstall_service(show_new_window: bool, _: bool) -> bool {
     chcp 65001
     sc stop {app_name}
     sc delete {app_name}
-    if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\"
+    if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{disp} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{disp} Tray.lnk\"
     taskkill /F /IM {broker_exe}
     taskkill /F /IM {app_name}.exe{filter}
     ",
+        disp = crate::ncg_defaults::display_name(),
         app_name = crate::get_app_name(),
         broker_exe = WIN_TOPMOST_INJECTED_PROCESS_EXE,
     );
@@ -3309,6 +3310,7 @@ pub fn uninstall_service(show_new_window: bool, _: bool) -> bool {
 
 fn get_install_service_commands(path: &str, exe: &str) -> ResultType<String> {
     let app_name = crate::get_app_name();
+    let disp = crate::ncg_defaults::display_name();
     for value in [path, exe] {
         validate_install_value(value)?;
     }
@@ -3330,7 +3332,7 @@ fn get_install_service_commands(path: &str, exe: &str) -> ResultType<String> {
 chcp 65001
 taskkill /F /IM {app_name}.exe{filter}
 {tray_shortcut_commands}
-copy /Y \"%RUSTDESK_OUTPUT_DIR%\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\"
+copy /Y \"%RUSTDESK_OUTPUT_DIR%\\{disp} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\"
 {import_config}
 {create_service}
     ",
@@ -3928,12 +3930,13 @@ fn get_import_config(exe: &str) -> String {
     format!("
 sc stop {app_name}
 sc delete {app_name}
-sc create {app_name} binpath= \"\\\"{exe}\\\" --import-config \\\"{config_path}\\\"\" start= auto DisplayName= \"{app_name} Service\"
+sc create {app_name} binpath= \"\\\"{exe}\\\" --import-config \\\"{config_path}\\\"\" start= auto DisplayName= \"{disp} Service\"
 sc start {app_name}
 sc stop {app_name}
 sc delete {app_name}
 ",
     app_name = crate::get_app_name(),
+    disp = crate::ncg_defaults::display_name(),
 )
 }
 
@@ -3944,15 +3947,16 @@ fn get_create_service(exe: &str) -> String {
     let stop = Config::get_option("stop-service") == "Y";
     if stop {
         format!("
-if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\"
-", app_name = crate::get_app_name())
+if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{disp} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{disp} Tray.lnk\"
+", disp = crate::ncg_defaults::display_name())
     } else {
         let exe = escape_nested_cmd_ampersands(exe);
         format!("
-sc create {app_name} binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{app_name} Service\"
+sc create {app_name} binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{disp} Service\"
 sc start {app_name}
 ",
-    app_name = crate::get_app_name())
+    app_name = crate::get_app_name(),
+    disp = crate::ncg_defaults::display_name())
     }
 }
 

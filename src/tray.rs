@@ -82,15 +82,11 @@ fn make_tray() -> hbb_common::ResultType<()> {
     }
     let tooltip = |count: usize| {
         if count == 0 {
-            format!(
-                "{} {}",
-                crate::get_app_name(),
-                translate("Service is running".to_owned()),
-            )
+            "NCG RA Service is Running".to_owned()
         } else {
             format!(
                 "{} - {}\n{}",
-                crate::get_app_name(),
+                crate::ncg_defaults::display_name(),
                 translate("Ready".to_owned()),
                 translate("{".to_string() + &format!("{count}") + "} sessions"),
             )

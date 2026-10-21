@@ -15,6 +15,7 @@ import '../../models/platform_model.dart';
 import '../../desktop/widgets/material_mod_popup_menu.dart' as mod_menu;
 import '../../desktop/widgets/popup_menu.dart';
 import 'dart:math' as math;
+import 'ncg_peers.dart';
 
 typedef PopupMenuEntryBuilder = Future<List<mod_menu.PopupMenuEntry<String>>>
     Function(BuildContext);
@@ -781,6 +782,16 @@ abstract class BasePeerCard extends StatelessWidget {
     );
   }
 
+  MenuEntryBase<String> _ncgFolderAction(Peer peer) {
+    return MenuEntryButton<String>(
+      childBuilder: (TextStyle? style) =>
+          Text(translate('Move to folder'), style: style),
+      proc: () => ncgFolderDialog(peer),
+      padding: menuPadding,
+      dismissOnClicked: true,
+    );
+  }
+
   @protected
   MenuEntryBase<String> _removeAction(String id) {
     return MenuEntryButton<String>(
@@ -995,6 +1006,7 @@ class RecentPeerCard extends BasePeerCard {
     menuItems.add(MenuEntryDivider());
     if (isMobile || isDesktop || isWebDesktop) {
       menuItems.add(_renameAction(peer.id));
+      menuItems.add(_ncgFolderAction(peer));
     }
     if (await bind.mainPeerHasPassword(id: peer.id)) {
       menuItems.add(_unrememberPasswordAction(peer.id));
