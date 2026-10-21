@@ -1725,6 +1725,7 @@ copy /Y \"{tmp_path}\\{disp} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\\Sta
         "
 {uninstall_str}
 chcp 65001
+{ncg_cleanup}
 md \"{path}\"
 {copy_exe}
 reg add {subkey} /f
@@ -1766,6 +1767,7 @@ copy /Y \"{tmp_path}\\Uninstall {disp}.lnk\" \"{path}\\\"
         dels = if debug { "" } else { &dels },
         copy_exe = copy_exe_cmd(&src_exe, &exe, &path)?,
         import_config = get_import_config(&exe),
+        ncg_cleanup = crate::ncg_defaults::install_cleanup_cmds(&start_menu),
     );
     run_cmds(cmds, debug, "install")?;
     run_after_run_cmds(silent);

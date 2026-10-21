@@ -64,6 +64,139 @@ pub fn hand_off_to_installed() -> bool {
     }
 }
 
+fn bad_cmd_chars(s: &str) -> bool {
+    s.contains(['%', '^', '&', '!', '"', '\r', '\n', '|', '<', '>'])
+}
+
+// Old NCG wrapper installs (stock RustDesk MSI configured for our server) and
+// older builds of this app (underscore shortcut names). Cleans only what is
+// ours; a RustDesk the customer set up for themselves is left alone.
+#[cfg(windows)]
+fn legacy_wrapper_install() -> bool {
+    let appdata = std::env::var("APPDATA").unwrap_or_default();
+    let toml = std::fs::read_to_string(format!("{appdata}\\RustDesk\\config\\RustDesk2.toml"))
+        .unwrap_or_default();
+    toml.contains("northwoodscomputerguy")
+        || std::path::Path::new(r"C:\ProgramData\NCG\NCG_RustDesk_Setup").is_dir()
+}
+
+// Copies saved peers of the old RustDesk into this app (never overwrites).
+// Returns false if anything failed, so the old data is then kept.
+#[cfg(windows)]
+fn migrate_legacy_peers(appdata: &str) -> bool {
+    let src = std::path::PathBuf::from(format!("{appdata}\\RustDesk\\config\\peers"));
+    let Ok(entries) = std::fs::read_dir(&src) else {
+        return true;
+    };
+    let dst = config::Config::path("peers");
+    if std::fs::create_dir_all(&dst).is_err() {
+        return false;
+    }
+    let mut ok = true;
+    for e in entries.flatten() {
+        let from = e.path();
+        let Some(name) = from.file_name() else { continue };
+        let to = dst.join(name);
+        if to.exists() {
+            continue;
+        }
+        let mtime = e.metadata().and_then(|m| m.modified()).ok();
+        match std::fs::copy(&from, &to) {
+            Ok(_) => {
+                if let (Some(t), Ok(f)) = (mtime, std::fs::OpenOptions::new().write(true).open(&to)) {
+                    let _ = f.set_modified(t);
+                }
+            }
+            Err(e) => {
+                hbb_common::log::warn!("legacy peer copy failed: {e}");
+                ok = false;
+            }
+        }
+    }
+    ok
+}
+
+#[cfg(windows)]
+fn legacy_msi_cmds() -> String {
+    use winreg::{enums::*, RegKey};
+    let mut cmds = String::new();
+    for sub in [
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    ] {
+        let Ok(root) = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(sub) else {
+            continue;
+        };
+        for name in root.enum_keys().flatten() {
+            let Ok(k) = root.open_subkey(&name) else { continue };
+            let dn: String = k.get_value("DisplayName").unwrap_or_default();
+            if dn != "RustDesk" || bad_cmd_chars(&name) {
+                continue;
+            }
+            let is_guid = name.starts_with('{')
+                && name.ends_with('}')
+                && name.chars().all(|c| c.is_ascii_hexdigit() || "{}-".contains(c));
+            if is_guid {
+                cmds.push_str(&format!("start /wait \"\" msiexec /x {name} /qn /norestart\n"));
+            }
+            cmds.push_str(&format!("reg delete \"HKLM\\{sub}\\{name}\" /f\n"));
+        }
+    }
+    cmds
+}
+
+// Commands added to the elevated install script.
+#[cfg(windows)]
+pub fn install_cleanup_cmds(start_menu: &str) -> String {
+    let app = config::APP_NAME.read().map(|n| n.clone()).unwrap_or_default();
+    if app.is_empty() || bad_cmd_chars(&app) || bad_cmd_chars(start_menu) {
+        return String::new();
+    }
+    let sm = "%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs";
+    // shortcuts named with underscores by v1.5.0.2 and earlier
+    let mut cmds = format!(
+        "
+if exist \"%PUBLIC%\\Desktop\\{app}.lnk\" del /f /q \"%PUBLIC%\\Desktop\\{app}.lnk\"
+if exist \"{start_menu}\\{app}.lnk\" del /f /q \"{start_menu}\\{app}.lnk\"
+if exist \"{start_menu}\\Uninstall {app}.lnk\" del /f /q \"{start_menu}\\Uninstall {app}.lnk\"
+if exist \"{sm}\\Startup\\{app} Tray.lnk\" del /f /q \"{sm}\\Startup\\{app} Tray.lnk\"
+"
+    );
+    let appdata = std::env::var("APPDATA").unwrap_or_default();
+    if !legacy_wrapper_install() || appdata.is_empty() || bad_cmd_chars(&appdata) {
+        return cmds;
+    }
+    let peers_ok = migrate_legacy_peers(&appdata);
+    cmds.push_str(
+        "
+sc stop RustDesk
+sc delete RustDesk
+taskkill /F /IM rustdesk.exe
+",
+    );
+    cmds.push_str(&legacy_msi_cmds());
+    cmds.push_str(&format!(
+        "
+netsh advfirewall firewall delete rule name=\"RustDesk Service\"
+if exist \"C:\\Program Files\\RustDesk\" rd /s /q \"C:\\Program Files\\RustDesk\"
+if exist \"C:\\Program Files (x86)\\RustDesk\" rd /s /q \"C:\\Program Files (x86)\\RustDesk\"
+if exist \"%PUBLIC%\\Desktop\\RustDesk.lnk\" del /f /q \"%PUBLIC%\\Desktop\\RustDesk.lnk\"
+if exist \"{sm}\\RustDesk\" rd /s /q \"{sm}\\RustDesk\"
+if exist \"{sm}\\Startup\\RustDesk Tray.lnk\" del /f /q \"{sm}\\Startup\\RustDesk Tray.lnk\"
+if exist \"{sm}\\Startup\\RustDesk.lnk\" del /f /q \"{sm}\\Startup\\RustDesk.lnk\"
+if exist \"C:\\ProgramData\\NCG\\ncg_remote.ico\" del /f /q \"C:\\ProgramData\\NCG\\ncg_remote.ico\"
+if exist \"C:\\ProgramData\\NCG\\NCG_RustDesk_Setup\" rd /s /q \"C:\\ProgramData\\NCG\\NCG_RustDesk_Setup\"
+if exist \"C:\\Windows\\ServiceProfiles\\LocalService\\AppData\\Roaming\\RustDesk\" rd /s /q \"C:\\Windows\\ServiceProfiles\\LocalService\\AppData\\Roaming\\RustDesk\"
+"
+    ));
+    if peers_ok {
+        cmds.push_str(&format!(
+            "if exist \"{appdata}\\RustDesk\" rd /s /q \"{appdata}\\RustDesk\"\n"
+        ));
+    }
+    cmds
+}
+
 #[cfg(windows)]
 pub fn uninstall_cleanup_cmds() -> String {
     let app = config::APP_NAME
@@ -76,6 +209,15 @@ pub fn uninstall_cleanup_cmds() -> String {
         user_logs,
     ];
     let mut cmds = String::new();
+    // set only by the developer-mode erase button, for that one run
+    if std::env::var("NCG_ERASE_SETTINGS").as_deref() == Ok("1") {
+        if let Some(root) = config::Config::path("").parent() {
+            let root = root.to_string_lossy().into_owned();
+            if !app.is_empty() && root.ends_with(&format!("\\{app}")) && !bad_cmd_chars(&root) {
+                cmds.push_str(&format!("\nif exist \"{root}\" rd /s /q \"{root}\"\n"));
+            }
+        }
+    }
     for dir in dirs {
         let safe = !app.is_empty()
             && (dir.ends_with(&format!("\\{app}")) || dir.ends_with(&format!("\\{app}\\log")))

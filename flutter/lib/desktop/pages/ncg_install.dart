@@ -14,9 +14,10 @@ Future<void> _install() async {
   bind.installInstallMe(options: _kInstallOptions, path: '');
 }
 
-Future<void> _uninstall() async {
+Future<void> _uninstall({bool erase = false}) async {
   await bind.mainSetLocalOption(key: _kInstallDeclinedOption, value: '');
   await Process.start(Platform.resolvedExecutable, ['--uninstall'],
+      environment: erase ? {'NCG_ERASE_SETTINGS': '1'} : null,
       mode: ProcessStartMode.detached);
 }
 
@@ -70,15 +71,17 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
     }
   }
 
-  Future<void> _confirmRemove() async {
+  Future<void> _confirmRemove({bool erase = false}) async {
     final ok = await showNcgDialog<bool>(
       context,
-      heading: translate('Remove from this computer?'),
-      body: translate(
-          'This takes the NCG remote assistance tool off this computer. You can install it again any time.'),
+      heading: translate(
+          erase ? 'Remove and erase settings?' : 'Remove from this computer?'),
+      body: translate(erase
+          ? 'This removes the tool AND deletes its settings: this computer\'s ID, saved peers and folders. Export your peers first if you want to keep them.'
+          : 'This takes the NCG remote assistance tool off this computer. You can install it again any time.'),
       buttons: [
         NcgXpButton(
-            label: translate('Remove'),
+            label: translate(erase ? 'Erase' : 'Remove'),
             primary: true,
             large: true,
             onPressed: () => Navigator.of(context).pop(true)),
@@ -92,7 +95,7 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
       _showProgress(
           'Thank you for using the NCG remote assistance tool',
           'It is being removed from this computer now. This window will close by itself.');
-      await _uninstall();
+      await _uninstall(erase: erase);
     }
   }
 
@@ -150,10 +153,18 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
       return const SizedBox.shrink();
     }
     if (_installed) {
-      return NcgXpButton(
+      final remove = NcgXpButton(
           onPressed: _confirmRemove,
           label: translate(
               widget.removeOnly ? 'Uninstall RA' : 'Remove from this computer'));
+      if (!widget.removeOnly) return remove;
+      return Row(mainAxisSize: MainAxisSize.min, children: [
+        remove,
+        const SizedBox(width: 8),
+        NcgXpButton(
+            onPressed: () => _confirmRemove(erase: true),
+            label: translate('Uninstall and erase')),
+      ]);
     }
     return NcgXpButton(
         onPressed: _startInstall,
