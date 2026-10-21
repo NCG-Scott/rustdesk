@@ -30,8 +30,8 @@ LegalCopyright = "Copyright © 2026 Northwoods Computer Guy"
 ProductName = "NCG Remote Assistance"
 OriginalFilename = "NCG_Remote_Assistance.exe"
 FileDescription = "NCG Remote Assistance"
-FileVersion = "1.5.0.6"
-ProductVersion = "1.5.0.6"
+FileVersion = "1.5.0.7"
+ProductVersion = "1.5.0.7"
 #ProductVersion = ""
 
 [target.'cfg(target_os="windows")'.build-dependencies]

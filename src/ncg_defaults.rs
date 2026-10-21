@@ -28,8 +28,15 @@ pub fn spawn_relaunch_helper() {
     }
     if let Err(e) = std::process::Command::new("cmd")
         .raw_arg(format!(
-            "/c for /l %i in (1,1,150) do (sc query \"{app}\" | find \"RUNNING\" >nul && \
-             (ping -n 7 127.0.0.1 >nul & start \"\" \"{exe}\" & exit) || ping -n 2 127.0.0.1 >nul)"
+            // g is set once the old service has stopped (upgrade) or at once (first install);
+            // only then wait for the new service to run, so the relaunched window is not
+            // killed by the install script that is still replacing files.
+            "/c {start}for /l %i in (1,1,150) do (if not defined g (sc query \"{app}\" | find \"RUNNING\" >nul \
+             && ping -n 2 127.0.0.1 >nul || set g=1)) & \
+             for /l %i in (1,1,150) do (if defined g (sc query \"{app}\" | find \"RUNNING\" >nul && \
+             (ping -n 7 127.0.0.1 >nul & start \"\" \"{exe}\" & exit) || ping -n 2 127.0.0.1 >nul) \
+             else ping -n 2 127.0.0.1 >nul)",
+            start = if crate::platform::is_self_service_running() { "" } else { "set g=1 & " },
         ))
         .creation_flags(0x0800_0000)
         .spawn()
@@ -43,7 +50,7 @@ pub fn spawn_relaunch_helper() {
 // so a newer Setup never silently opens an older install.
 // Our own version, bumped with kNcgVersion and libs/portable. Stored as the installed
 // program's DisplayVersion so a newer Setup can tell it is an upgrade.
-pub const NCG_VERSION: &str = "1.5.0.6";
+pub const NCG_VERSION: &str = "1.5.0.7";
 
 #[cfg(windows)]
 fn installed_version() -> String {
