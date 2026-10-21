@@ -33,6 +33,9 @@ TextStyle ncgText(double size,
         decoration: TextDecoration.none);
 
 /// Wallpaper banner with the NCG badge and product name.
+/// Shown bottom-right of the banner; bump with each NCG release.
+const kNcgVersion = 'v1.5.0';
+
 class NcgBanner extends StatelessWidget {
   const NcgBanner({Key? key}) : super(key: key);
 
@@ -75,6 +78,13 @@ class NcgBanner extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          Positioned(
+            right: 12,
+            bottom: 8,
+            child: Text(kNcgVersion,
+                style: ncgText(12, bold: true, color: Colors.white)
+                    .copyWith(shadows: shadow)),
           ),
         ],
       ),
