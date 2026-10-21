@@ -57,7 +57,21 @@ class NcgHomePage extends StatelessWidget {
           ),
           if (ncgDeveloperMode.value) ...[
             const Positioned(
-                left: 12, bottom: 10, child: NcgInstallSection(removeOnly: true)),
+                left: 12, bottom: 56, child: NcgInstallSection(removeOnly: true)),
+            Positioned(
+              right: 16,
+              top: 8,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.6,
+                  child: Text('NCG Remote Assistance $kNcgVersion',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontSize: 11)),
+                ),
+              ),
+            ),
             Positioned(
               right: 12,
               bottom: 8,

@@ -41,6 +41,72 @@ pub fn spawn_relaunch_helper() {
 // A second copy (e.g. the unpacked Setup EXE) cannot start its own server while the
 // installed service owns it. Same-size check: only hand off to an identical build,
 // so a newer Setup never silently opens an older install.
+// Our own version, bumped with kNcgVersion and libs/portable. Stored as the installed
+// program's DisplayVersion so a newer Setup can tell it is an upgrade.
+pub const NCG_VERSION: &str = "1.5.0.5";
+
+#[cfg(windows)]
+fn installed_version() -> String {
+    use winreg::{enums::*, RegKey};
+    let app = config::APP_NAME.read().map(|n| n.clone()).unwrap_or_default();
+    RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey(format!(
+            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{app}"
+        ))
+        .and_then(|k| k.get_value::<String, _>("DisplayVersion"))
+        .unwrap_or_default()
+}
+
+// A different build is installed: ask before showing the normal screen.
+// Returns true when this process should exit (handled or cancelled).
+#[cfg(windows)]
+fn offer_upgrade(installed_exe: &str) -> bool {
+    use winapi::um::winuser::{
+        MessageBoxW, IDNO, IDYES, MB_ICONQUESTION, MB_SETFOREGROUND, MB_TOPMOST, MB_YESNOCANCEL,
+    };
+    let wide = |s: &str| s.encode_utf16().chain(std::iter::once(0)).collect::<Vec<u16>>();
+    let old = installed_version();
+    let old = if old.is_empty() || old == "1.5.0" { "an older version".to_owned() } else { format!("version {old}") };
+    let name = display_name();
+    let text = wide(&format!(
+        "{name} is already installed ({old}). This is version {NCG_VERSION}.\n\n\
+         Yes: upgrade now (keeps your ID, peers and settings)\n\
+         No: open the installed version instead\n\
+         Cancel: do nothing"
+    ));
+    let caption = wide(&format!("{name} {NCG_VERSION}"));
+    let answer = unsafe {
+        MessageBoxW(
+            std::ptr::null_mut(),
+            text.as_ptr(),
+            caption.as_ptr(),
+            MB_YESNOCANCEL | MB_ICONQUESTION | MB_SETFOREGROUND | MB_TOPMOST,
+        )
+    };
+    match answer {
+        IDYES => {
+            spawn_relaunch_helper();
+            match crate::platform::windows::install_me("startmenu desktopicon", "".to_owned(), false, false) {
+                Ok(_) => true,
+                Err(e) => {
+                    hbb_common::log::warn!("upgrade failed: {e}");
+                    let msg = wide(&format!("The upgrade did not finish. Nothing was changed.\n\n{e}"));
+                    unsafe { MessageBoxW(std::ptr::null_mut(), msg.as_ptr(), caption.as_ptr(), MB_SETFOREGROUND | MB_TOPMOST) };
+                    false
+                }
+            }
+        }
+        IDNO => {
+            if let Err(e) = std::process::Command::new(installed_exe).spawn() {
+                hbb_common::log::warn!("open installed copy failed: {e}");
+                return false;
+            }
+            true
+        }
+        _ => true,
+    }
+}
+
 #[cfg(windows)]
 pub fn hand_off_to_installed() -> bool {
     if crate::platform::is_cur_exe_the_installed() || !crate::platform::is_self_service_running()
@@ -53,7 +119,7 @@ pub fn hand_off_to_installed() -> bool {
         _ => false,
     };
     if !same_build {
-        return false;
+        return offer_upgrade(&exe);
     }
     match std::process::Command::new(&exe).spawn() {
         Ok(_) => true,

@@ -71,6 +71,33 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
     }
   }
 
+  Future<void> _chooseUninstall() async {
+    final choice = await showNcgDialog<String>(
+      context,
+      heading: translate('Uninstall RA'),
+      body: translate(
+          'Uninstall keeps this computer\'s ID, saved peers and settings, so a reinstall picks up where you left off. Uninstall and erase deletes them too.'),
+      buttons: [
+        NcgXpButton(
+            label: translate('Uninstall'),
+            primary: true,
+            large: true,
+            onPressed: () => Navigator.of(context).pop('keep')),
+        NcgXpButton(
+            label: translate('Uninstall and erase'),
+            large: true,
+            onPressed: () => Navigator.of(context).pop('erase')),
+        NcgXpButton(
+            label: translate('Cancel'),
+            large: true,
+            onPressed: () => Navigator.of(context).pop('')),
+      ],
+    );
+    if (choice == 'keep' || choice == 'erase') {
+      await _confirmRemove(erase: choice == 'erase');
+    }
+  }
+
   Future<void> _confirmRemove({bool erase = false}) async {
     final ok = await showNcgDialog<bool>(
       context,
@@ -153,18 +180,13 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
       return const SizedBox.shrink();
     }
     if (_installed) {
-      final remove = NcgXpButton(
-          onPressed: _confirmRemove,
-          label: translate(
-              widget.removeOnly ? 'Uninstall RA' : 'Remove from this computer'));
-      if (!widget.removeOnly) return remove;
-      return Row(mainAxisSize: MainAxisSize.min, children: [
-        remove,
-        const SizedBox(width: 8),
-        NcgXpButton(
-            onPressed: () => _confirmRemove(erase: true),
-            label: translate('Uninstall and erase')),
-      ]);
+      if (!widget.removeOnly) {
+        return NcgXpButton(
+            onPressed: _confirmRemove,
+            label: translate('Remove from this computer'));
+      }
+      return NcgXpButton(
+          onPressed: _chooseUninstall, label: translate('Uninstall RA'));
     }
     return NcgXpButton(
         onPressed: _startInstall,

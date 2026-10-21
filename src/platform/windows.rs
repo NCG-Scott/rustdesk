@@ -1731,7 +1731,7 @@ md \"{path}\"
 reg add {subkey} /f
 reg add {subkey} /f /v DisplayIcon /t REG_SZ /d \"{display_icon}\"
 reg add {subkey} /f /v DisplayName /t REG_SZ /d \"{disp}\"
-reg add {subkey} /f /v DisplayVersion /t REG_SZ /d \"{version}\"
+reg add {subkey} /f /v DisplayVersion /t REG_SZ /d \"{ncg_version}\"
 reg add {subkey} /f /v Version /t REG_SZ /d \"{version}\"
 reg add {subkey} /f /v BuildDate /t REG_SZ /d \"{build_date}\"
 reg add {subkey} /f /v InstallLocation /t REG_SZ /d \"{path}\"
@@ -1768,6 +1768,7 @@ copy /Y \"{tmp_path}\\Uninstall {disp}.lnk\" \"{path}\\\"
         copy_exe = copy_exe_cmd(&src_exe, &exe, &path)?,
         import_config = get_import_config(&exe),
         ncg_cleanup = crate::ncg_defaults::install_cleanup_cmds(&start_menu),
+        ncg_version = crate::ncg_defaults::NCG_VERSION,
     );
     run_cmds(cmds, debug, "install")?;
     run_after_run_cmds(silent);
