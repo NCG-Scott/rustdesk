@@ -48,10 +48,32 @@ class NcgHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     // The stock page stays mounted while hidden: its initState registers state
     // (e.g. 'stop-service') that the status widget and Settings look up.
-    return Obx(() => IndexedStack(
-          index: ncgDeveloperMode.value ? 1 : 0,
-          children: const [NcgCustomerPage(), DesktopHomePage()],
-        ));
+    return Obx(() => Stack(children: [
+          Positioned.fill(
+            child: IndexedStack(
+              index: ncgDeveloperMode.value ? 1 : 0,
+              children: const [NcgCustomerPage(), DesktopHomePage()],
+            ),
+          ),
+          if (ncgDeveloperMode.value) ...[
+            const Positioned(
+                left: 12, bottom: 10, child: NcgInstallSection(removeOnly: true)),
+            Positioned(
+              right: 12,
+              bottom: 8,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.5,
+                  child: Text(translate('powered_by_me'),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontSize: 10)),
+                ),
+              ),
+            ),
+          ],
+        ]));
   }
 }
 

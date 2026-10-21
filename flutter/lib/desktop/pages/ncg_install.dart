@@ -21,7 +21,9 @@ Future<void> _uninstall() async {
 }
 
 class NcgInstallSection extends StatefulWidget {
-  const NcgInstallSection({Key? key}) : super(key: key);
+  final bool removeOnly;
+  const NcgInstallSection({Key? key, this.removeOnly = false})
+      : super(key: key);
 
   @override
   State<NcgInstallSection> createState() => _NcgInstallSectionState();
@@ -34,6 +36,7 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
   void initState() {
     super.initState();
     if (isWindows &&
+        !widget.removeOnly &&
         !_installed &&
         bind.mainGetLocalOption(key: _kInstallDeclinedOption) != 'Y') {
       WidgetsBinding.instance.addPostFrameCallback((_) => _offer());
@@ -143,7 +146,9 @@ class _NcgInstallSectionState extends State<NcgInstallSection> {
 
   @override
   Widget build(BuildContext context) {
-    if (!isWindows) return const SizedBox.shrink();
+    if (!isWindows || (widget.removeOnly && !_installed)) {
+      return const SizedBox.shrink();
+    }
     if (_installed) {
       return NcgXpButton(
           onPressed: _confirmRemove,

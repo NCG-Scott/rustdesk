@@ -29,6 +29,32 @@ pub fn spawn_relaunch_helper() {
     }
 }
 
+// A second copy (e.g. the unpacked Setup EXE) cannot start its own server while the
+// installed service owns it. Same-size check: only hand off to an identical build,
+// so a newer Setup never silently opens an older install.
+#[cfg(windows)]
+pub fn hand_off_to_installed() -> bool {
+    if crate::platform::is_cur_exe_the_installed() || !crate::platform::is_self_service_running()
+    {
+        return false;
+    }
+    let (_, _, _, exe) = crate::platform::windows::get_install_info();
+    let same_build = match (std::env::current_exe().and_then(std::fs::metadata), std::fs::metadata(&exe)) {
+        (Ok(a), Ok(b)) => a.len() == b.len(),
+        _ => false,
+    };
+    if !same_build {
+        return false;
+    }
+    match std::process::Command::new(&exe).spawn() {
+        Ok(_) => true,
+        Err(e) => {
+            hbb_common::log::warn!("hand off to installed copy failed: {e}");
+            false
+        }
+    }
+}
+
 #[cfg(windows)]
 pub fn uninstall_cleanup_cmds() -> String {
     let app = config::APP_NAME

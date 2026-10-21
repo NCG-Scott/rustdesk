@@ -80,6 +80,10 @@ pub fn core_main() -> Option<Vec<String>> {
         }
         i += 1;
     }
+    #[cfg(windows)]
+    if args.is_empty() && crate::ncg_defaults::hand_off_to_installed() {
+        return None;
+    }
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     if args.is_empty() {
         #[cfg(target_os = "linux")]
